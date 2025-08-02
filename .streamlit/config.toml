@@ -1,0 +1,74 @@
+[global]
+
+# If false, will attempt to open a browser window on start.
+showWarningOnDirectExecution = false
+
+[logger]
+
+# Level of logging: 'error', 'warning', 'info', or 'debug'.
+level = "info"
+
+[client]
+
+# If false, will attempt to open a browser window on start.
+showErrorDetails = true
+
+[server]
+
+# List of folders that should not be watched for changes. This impacts both the changeDetection and fileWatcher.
+folderWatchBlacklist = ['']
+
+# Change the type of file watcher used by Streamlit, or turn it off completely.
+fileWatcherType = "auto"
+
+# Symmetric key used to produce signed cookies. If deploying on multiple replicas, this should be set to the same value across all replicas to ensure they all share the same secret.
+cookieSecret = "foundation-design-aci318"
+
+# If false, will attempt to open a browser window on start.
+headless = false
+
+# Automatically rerun script when the file is modified.
+runOnSave = true
+
+# The address where the server will listen for client and browser connections. Use this if you want to bind the server to a specific address. If set, the server will only be accessible from this address, and not from any interface.
+address = "localhost"
+
+# The port where the server will listen for client and browser connections.
+port = 8501
+
+# The base path for the URL where Streamlit should be served from.
+baseUrlPath = ""
+
+# Enables support for Cross-Origin Resource Sharing (CORS) protection, for added security.
+enableCORS = false
+
+# Enables support for Cross-Site Request Forgery (XSRF) protection, for added security.
+enableXsrfProtection = false
+
+[browser]
+
+# Internet address where users should point their browsers in order to connect to the app. Can be IP address or DNS name and path.
+serverAddress = "localhost"
+
+# Whether to send usage statistics to Streamlit.
+gatherUsageStats = false
+
+# Port where users should point their browsers in order to connect to the app.
+serverPort = 8501
+
+[theme]
+
+# Primary accent color for interactive elements.
+primaryColor = "#1f77b4"
+
+# Background color for the main content area.
+backgroundColor = "#ffffff"
+
+# Background color used for the sidebar and most interactive widgets.
+secondaryBackgroundColor = "#f0f2f6"
+
+# Color used for almost all text.
+textColor = "#262730"
+
+# Font family for all text in the app, except code blocks. One of "sans serif", "serif", or "monospace".
+font = "sans serif"
