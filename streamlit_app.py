@@ -1357,14 +1357,19 @@ if run_analysis:
                 fillcolor='rgba(200, 200, 200, 0.3)'
             ))
             
-            # Column (simplified as line at center)
+            # Column (with 1000mm height above foundation)
             col_center_x = foundation_size_length / 2
+            column_height = 1000  # 1.0 meter
             fig_section_x.add_trace(go.Scatter(
-                x=[col_center_x - column_length/2, col_center_x + column_length/2],
-                y=[foundation_thickness, foundation_thickness],
+                x=[col_center_x - column_length/2, col_center_x - column_length/2, 
+                   col_center_x + column_length/2, col_center_x + column_length/2],
+                y=[foundation_thickness, foundation_thickness + column_height,
+                   foundation_thickness + column_height, foundation_thickness],
                 mode='lines',
-                line=dict(color='red', width=12),
-                name='Column'
+                line=dict(color='red', width=4),
+                name='Column',
+                fill='toself',
+                fillcolor='rgba(255, 0, 0, 0.2)'
             ))
             
             # Bottom reinforcement (X-direction bars)
@@ -1404,32 +1409,6 @@ if run_analysis:
                 showarrow=False,
                 font=dict(size=14, color='blue', family='Arial Black'),
                 textangle=90
-            )
-            
-            # Cover dimension
-            fig_section_x.add_annotation(
-                x=100, y=rebar_level/2,
-                text=f"Cover = {steel_cover} mm",
-                showarrow=True,
-                arrowhead=3,
-                arrowsize=1.5,
-                arrowcolor="green",
-                ax=100,
-                ay=0,
-                font=dict(size=12, color='green')
-            )
-            
-            # Effective depth annotation
-            fig_section_x.add_annotation(
-                x=foundation_size_length - 100, y=(foundation_thickness + rebar_level)/2,
-                text=f"d = {foundation_thickness - steel_cover - bar_dia_x/2:.0f} mm",
-                showarrow=True,
-                arrowhead=3,
-                arrowsize=1.5,
-                arrowcolor="purple",
-                ax=foundation_size_length - 100,
-                ay=foundation_thickness,
-                font=dict(size=12, color='purple')
             )
             
             fig_section_x.update_layout(
@@ -1477,14 +1456,19 @@ if run_analysis:
                 fillcolor='rgba(200, 200, 200, 0.3)'
             ))
             
-            # Column (simplified as line at center)
+            # Column (with 1000mm height above foundation)
             col_center_y = foundation_size_width / 2
+            column_height = 1000  # 1.0 meter
             fig_section_y.add_trace(go.Scatter(
-                x=[col_center_y - column_width/2, col_center_y + column_width/2],
-                y=[foundation_thickness, foundation_thickness],
+                x=[col_center_y - column_width/2, col_center_y - column_width/2, 
+                   col_center_y + column_width/2, col_center_y + column_width/2],
+                y=[foundation_thickness, foundation_thickness + column_height,
+                   foundation_thickness + column_height, foundation_thickness],
                 mode='lines',
-                line=dict(color='red', width=12),
-                name='Column'
+                line=dict(color='red', width=4),
+                name='Column',
+                fill='toself',
+                fillcolor='rgba(255, 0, 0, 0.2)'
             ))
             
             # Bottom reinforcement (Y-direction bars) 
@@ -1524,32 +1508,6 @@ if run_analysis:
                 showarrow=False,
                 font=dict(size=14, color='blue', family='Arial Black'),
                 textangle=90
-            )
-            
-            # Cover dimension
-            fig_section_y.add_annotation(
-                x=100, y=rebar_level/2,
-                text=f"Cover = {steel_cover} mm",
-                showarrow=True,
-                arrowhead=3,
-                arrowsize=1.5,
-                arrowcolor="green",
-                ax=100,
-                ay=0,
-                font=dict(size=12, color='green')
-            )
-            
-            # Effective depth annotation
-            fig_section_y.add_annotation(
-                x=foundation_size_width - 100, y=(foundation_thickness + rebar_level)/2,
-                text=f"d = {foundation_thickness - steel_cover - bar_dia_y/2:.0f} mm",
-                showarrow=True,
-                arrowhead=3,
-                arrowsize=1.5,
-                arrowcolor="purple",
-                ax=foundation_size_width - 100,
-                ay=foundation_thickness,
-                font=dict(size=12, color='purple')
             )
             
             fig_section_y.update_layout(
