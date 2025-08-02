@@ -1224,7 +1224,23 @@ if run_analysis:
         with tab5:
             st.markdown("### Visualization")
             
-            # Foundation plan view
+            # Foundation plan view with reinforcement
+            st.markdown("#### Foundation Plan with Reinforcement")
+            
+            # Calculate reinforcement details for plan view
+            As_x = max(flexural['x_direction']['required_As'], flexural['x_direction']['minimum_As'])
+            As_y = max(flexural['y_direction']['required_As'], flexural['y_direction']['minimum_As'])
+            
+            bar_area_x = math.pi * (bar_dia_x/2)**2
+            bar_area_y = math.pi * (bar_dia_y/2)**2
+            
+            spacing_x = min(250, int(1000 * bar_area_x / As_x / 25) * 25)
+            spacing_y = min(250, int(1000 * bar_area_y / As_y / 25) * 25)
+            
+            # Number of bars
+            num_bars_x = int(foundation_size_length / spacing_x) + 1
+            num_bars_y = int(foundation_size_width / spacing_y) + 1
+            
             fig_plan = go.Figure()
             
             # Foundation outline
@@ -1254,28 +1270,67 @@ if run_analysis:
                 fillcolor='rgba(255, 99, 71, 0.5)'
             ))
             
-            # Critical section for punching shear
-            d = foundation_thickness - steel_cover - bar_dia_x/2
-            crit_x1 = col_x1 - d/2
-            crit_x2 = col_x2 + d/2
-            crit_y1 = col_y1 - d/2
-            crit_y2 = col_y2 + d/2
+            # Add reinforcement bars - X direction (running in X direction)
+            cover_edge = steel_cover + bar_dia_x/2
+            for i in range(num_bars_y):
+                y_pos = cover_edge + i * spacing_y
+                if y_pos <= foundation_size_width - cover_edge:
+                    fig_plan.add_trace(go.Scatter(
+                        x=[cover_edge, foundation_size_length - cover_edge],
+                        y=[y_pos, y_pos],
+                        mode='lines',
+                        line=dict(color='darkred', width=2),
+                        name=f'Rebar X-dir' if i == 0 else None,
+                        showlegend=True if i == 0 else False
+                    ))
             
-            fig_plan.add_trace(go.Scatter(
-                x=[crit_x1, crit_x2, crit_x2, crit_x1, crit_x1],
-                y=[crit_y1, crit_y1, crit_y2, crit_y2, crit_y1],
-                mode='lines',
-                line=dict(color='orange', width=2, dash='dash'),
-                name='Critical Section (Punching)',
-                fill=None
-            ))
+            # Add reinforcement bars - Y direction (running in Y direction)
+            for i in range(num_bars_x):
+                x_pos = cover_edge + i * spacing_x
+                if x_pos <= foundation_size_length - cover_edge:
+                    fig_plan.add_trace(go.Scatter(
+                        x=[x_pos, x_pos],
+                        y=[cover_edge, foundation_size_width - cover_edge],
+                        mode='lines',
+                        line=dict(color='darkgreen', width=2),
+                        name=f'Rebar Y-dir' if i == 0 else None,
+                        showlegend=True if i == 0 else False
+                    ))
+            
+            # Add dimensions and annotations
+            fig_plan.add_annotation(
+                x=foundation_size_length/2, y=-100,
+                text=f"{foundation_size_length} mm",
+                showarrow=False,
+                font=dict(size=12, color="blue")
+            )
+            
+            fig_plan.add_annotation(
+                x=-150, y=foundation_size_width/2,
+                text=f"{foundation_size_width} mm",
+                showarrow=False,
+                font=dict(size=12, color="blue"),
+                textangle=90
+            )
+            
+            # Reinforcement details annotation
+            fig_plan.add_annotation(
+                x=foundation_size_length + 100, y=foundation_size_width*0.8,
+                text=f"X-Direction:<br>#{bar_dia_x}mm @ {spacing_x}mm c/c<br>({num_bars_y} bars)<br><br>Y-Direction:<br>#{bar_dia_y}mm @ {spacing_y}mm c/c<br>({num_bars_x} bars)",
+                showarrow=False,
+                font=dict(size=10, color="black"),
+                align="left",
+                bgcolor="white",
+                bordercolor="black",
+                borderwidth=1
+            )
             
             fig_plan.update_layout(
-                title="Foundation Plan View",
+                title="Foundation Plan - Reinforcement Layout",
                 xaxis_title="X (mm)",
                 yaxis_title="Y (mm)",
                 showlegend=True,
-                width=600,
+                width=800,
                 height=600,
                 xaxis=dict(scaleanchor="y", scaleratio=1),
                 yaxis=dict(constrain="domain")
@@ -1283,7 +1338,248 @@ if run_analysis:
             
             st.plotly_chart(fig_plan, use_container_width=True)
             
+            # Additional foundation sections with reinforcement
+            st.markdown("#### Foundation Sections - Reinforcement Details")
+            
+            # X-Direction Section (Display first)
+            st.markdown("##### Section A-A (X-Direction)")
+            
+            fig_section_x = go.Figure()
+            
+            # Foundation section outline
+            fig_section_x.add_trace(go.Scatter(
+                x=[0, foundation_size_length, foundation_size_length, 0, 0],
+                y=[0, 0, foundation_thickness, foundation_thickness, 0],
+                mode='lines',
+                line=dict(color='gray', width=4),
+                name='Foundation',
+                fill='toself',
+                fillcolor='rgba(200, 200, 200, 0.3)'
+            ))
+            
+            # Column (simplified as line at center)
+            col_center_x = foundation_size_length / 2
+            fig_section_x.add_trace(go.Scatter(
+                x=[col_center_x - column_length/2, col_center_x + column_length/2],
+                y=[foundation_thickness, foundation_thickness],
+                mode='lines',
+                line=dict(color='red', width=12),
+                name='Column'
+            ))
+            
+            # Bottom reinforcement (X-direction bars)
+            rebar_level = steel_cover + bar_dia_x/2
+            for i in range(num_bars_y):
+                y_pos_plan = steel_cover + bar_dia_x/2 + i * spacing_y
+                if y_pos_plan <= foundation_size_width - steel_cover - bar_dia_x/2:
+                    # Show as circles (bar cross-sections)
+                    x_positions = []
+                    for j in range(num_bars_x):
+                        x_pos = steel_cover + bar_dia_x/2 + j * spacing_x
+                        if x_pos <= foundation_size_length - steel_cover - bar_dia_x/2:
+                            x_positions.append(x_pos)
+                    
+                    if x_positions:  # Only add if there are positions
+                        fig_section_x.add_trace(go.Scatter(
+                            x=x_positions,
+                            y=[rebar_level] * len(x_positions),
+                            mode='markers',
+                            marker=dict(size=bar_dia_x*0.8, color='darkred', symbol='circle', 
+                                      line=dict(width=2, color='black')),
+                            name=f'#{bar_dia_x}mm bars' if i == 0 else None,
+                            showlegend=True if i == 0 else False
+                        ))
+            
+            # Dimension lines and annotations
+            fig_section_x.add_annotation(
+                x=foundation_size_length/2, y=-80,
+                text=f"Length: {foundation_size_length} mm",
+                showarrow=False,
+                font=dict(size=14, color='blue', family='Arial Black')
+            )
+            
+            fig_section_x.add_annotation(
+                x=-150, y=foundation_thickness/2,
+                text=f"h = {foundation_thickness} mm",
+                showarrow=False,
+                font=dict(size=14, color='blue', family='Arial Black'),
+                textangle=90
+            )
+            
+            # Cover dimension
+            fig_section_x.add_annotation(
+                x=100, y=rebar_level/2,
+                text=f"Cover = {steel_cover} mm",
+                showarrow=True,
+                arrowhead=3,
+                arrowsize=1.5,
+                arrowcolor="green",
+                ax=100,
+                ay=0,
+                font=dict(size=12, color='green')
+            )
+            
+            # Effective depth annotation
+            fig_section_x.add_annotation(
+                x=foundation_size_length - 100, y=(foundation_thickness + rebar_level)/2,
+                text=f"d = {foundation_thickness - steel_cover - bar_dia_x/2:.0f} mm",
+                showarrow=True,
+                arrowhead=3,
+                arrowsize=1.5,
+                arrowcolor="purple",
+                ax=foundation_size_length - 100,
+                ay=foundation_thickness,
+                font=dict(size=12, color='purple')
+            )
+            
+            fig_section_x.update_layout(
+                title=dict(
+                    text="Section A-A: X-Direction Reinforcement",
+                    font=dict(size=16, family='Arial Black')
+                ),
+                xaxis_title="Length (mm)",
+                yaxis_title="Height (mm)",
+                height=500,
+                showlegend=True,
+                font=dict(size=12),
+                plot_bgcolor='white',
+                xaxis=dict(showgrid=True, gridcolor='lightgray'),
+                yaxis=dict(showgrid=True, gridcolor='lightgray', scaleanchor="x", scaleratio=0.2)
+            )
+            
+            st.plotly_chart(fig_section_x, use_container_width=True)
+            
+            # Add reinforcement details below the chart
+            st.markdown(f"""
+            **Section A-A Details:**
+            - Bar Size: #{bar_dia_x}mm
+            - Spacing: {spacing_x}mm c/c  
+            - Number of bars: {len([x for x in range(num_bars_x) if steel_cover + bar_dia_x/2 + x * spacing_x <= foundation_size_length - steel_cover - bar_dia_x/2])} bars
+            - Effective depth: {foundation_thickness - steel_cover - bar_dia_x/2:.0f} mm
+            """)
+            
+            # Add separator line
+            st.markdown("---")
+            
+            # Y-Direction Section (Display second, below X-Direction)
+            st.markdown("##### Section B-B (Y-Direction)")
+            
+            fig_section_y = go.Figure()
+            
+            # Foundation section outline
+            fig_section_y.add_trace(go.Scatter(
+                x=[0, foundation_size_width, foundation_size_width, 0, 0],
+                y=[0, 0, foundation_thickness, foundation_thickness, 0],
+                mode='lines',
+                line=dict(color='gray', width=4),
+                name='Foundation',
+                fill='toself',
+                fillcolor='rgba(200, 200, 200, 0.3)'
+            ))
+            
+            # Column (simplified as line at center)
+            col_center_y = foundation_size_width / 2
+            fig_section_y.add_trace(go.Scatter(
+                x=[col_center_y - column_width/2, col_center_y + column_width/2],
+                y=[foundation_thickness, foundation_thickness],
+                mode='lines',
+                line=dict(color='red', width=12),
+                name='Column'
+            ))
+            
+            # Bottom reinforcement (Y-direction bars) 
+            rebar_level = steel_cover + bar_dia_y/2
+            for i in range(num_bars_x):
+                x_pos_plan = steel_cover + bar_dia_y/2 + i * spacing_x
+                if x_pos_plan <= foundation_size_length - steel_cover - bar_dia_y/2:
+                    # Show as circles (bar cross-sections)
+                    y_positions = []
+                    for j in range(num_bars_y):
+                        y_pos = steel_cover + bar_dia_y/2 + j * spacing_y
+                        if y_pos <= foundation_size_width - steel_cover - bar_dia_y/2:
+                            y_positions.append(y_pos)
+                    
+                    if y_positions:  # Only add if there are positions
+                        fig_section_y.add_trace(go.Scatter(
+                            x=y_positions,
+                            y=[rebar_level] * len(y_positions),
+                            mode='markers',
+                            marker=dict(size=bar_dia_y*0.8, color='darkgreen', symbol='circle',
+                                      line=dict(width=2, color='black')),
+                            name=f'#{bar_dia_y}mm bars' if i == 0 else None,
+                            showlegend=True if i == 0 else False
+                        ))
+            
+            # Dimension lines and annotations
+            fig_section_y.add_annotation(
+                x=foundation_size_width/2, y=-80,
+                text=f"Width: {foundation_size_width} mm",
+                showarrow=False,
+                font=dict(size=14, color='blue', family='Arial Black')
+            )
+            
+            fig_section_y.add_annotation(
+                x=-150, y=foundation_thickness/2,
+                text=f"h = {foundation_thickness} mm",
+                showarrow=False,
+                font=dict(size=14, color='blue', family='Arial Black'),
+                textangle=90
+            )
+            
+            # Cover dimension
+            fig_section_y.add_annotation(
+                x=100, y=rebar_level/2,
+                text=f"Cover = {steel_cover} mm",
+                showarrow=True,
+                arrowhead=3,
+                arrowsize=1.5,
+                arrowcolor="green",
+                ax=100,
+                ay=0,
+                font=dict(size=12, color='green')
+            )
+            
+            # Effective depth annotation
+            fig_section_y.add_annotation(
+                x=foundation_size_width - 100, y=(foundation_thickness + rebar_level)/2,
+                text=f"d = {foundation_thickness - steel_cover - bar_dia_y/2:.0f} mm",
+                showarrow=True,
+                arrowhead=3,
+                arrowsize=1.5,
+                arrowcolor="purple",
+                ax=foundation_size_width - 100,
+                ay=foundation_thickness,
+                font=dict(size=12, color='purple')
+            )
+            
+            fig_section_y.update_layout(
+                title=dict(
+                    text="Section B-B: Y-Direction Reinforcement",
+                    font=dict(size=16, family='Arial Black')
+                ),
+                xaxis_title="Width (mm)",
+                yaxis_title="Height (mm)",
+                height=500,
+                showlegend=True,
+                font=dict(size=12),
+                plot_bgcolor='white',
+                xaxis=dict(showgrid=True, gridcolor='lightgray'),
+                yaxis=dict(showgrid=True, gridcolor='lightgray', scaleanchor="x", scaleratio=0.2)
+            )
+            
+            st.plotly_chart(fig_section_y, use_container_width=True)
+            
+            # Add reinforcement details below the chart
+            st.markdown(f"""
+            **Section B-B Details:**
+            - Bar Size: #{bar_dia_y}mm
+            - Spacing: {spacing_y}mm c/c
+            - Number of bars: {len([y for y in range(num_bars_y) if steel_cover + bar_dia_y/2 + y * spacing_y <= foundation_size_width - steel_cover - bar_dia_y/2])} bars
+            - Effective depth: {foundation_thickness - steel_cover - bar_dia_y/2:.0f} mm
+            """)
+            
             # Demand vs Capacity chart
+            st.markdown("#### Design Check Summary")
             fig_dc = go.Figure()
             
             checks = ['Bearing\nPressure', 'Punching\nShear', 'Shear X', 'Shear Y']
@@ -1317,7 +1613,48 @@ if run_analysis:
             
             st.plotly_chart(fig_dc, use_container_width=True)
             
-            # Additional visualization columns
+            # Reinforcement summary table
+            st.markdown("#### Reinforcement Summary")
+            
+            # Calculate actual number of bars
+            actual_bars_x = len([x for x in range(num_bars_x) if steel_cover + bar_dia_x/2 + x * spacing_x <= foundation_size_length - steel_cover - bar_dia_x/2])
+            actual_bars_y = len([y for y in range(num_bars_y) if steel_cover + bar_dia_y/2 + y * spacing_y <= foundation_size_width - steel_cover - bar_dia_y/2])
+            
+            # Calculate total steel weight
+            bar_length_x = foundation_size_length - 2 * steel_cover  # Effective length
+            bar_length_y = foundation_size_width - 2 * steel_cover   # Effective length
+            
+            # Steel weight per meter (kg/m) for different bar sizes
+            steel_weights = {12: 0.888, 16: 1.578, 20: 2.466, 25: 3.853, 32: 6.313}
+            
+            weight_x = actual_bars_y * (bar_length_x/1000) * steel_weights.get(bar_dia_x, 1.0)  # kg
+            weight_y = actual_bars_x * (bar_length_y/1000) * steel_weights.get(bar_dia_y, 1.0)  # kg
+            total_weight = weight_x + weight_y
+            
+            rebar_summary = {
+                "Direction": ["X-Direction", "Y-Direction", "Total"],
+                "Bar Size (mm)": [f"#{bar_dia_x}", f"#{bar_dia_y}", "-"],
+                "Spacing (mm)": [spacing_x, spacing_y, "-"],
+                "Number of Bars": [actual_bars_y, actual_bars_x, actual_bars_x + actual_bars_y],
+                "Bar Length (m)": [f"{bar_length_x/1000:.2f}", f"{bar_length_y/1000:.2f}", "-"],
+                "Total Length (m)": [f"{actual_bars_y * bar_length_x/1000:.1f}", f"{actual_bars_x * bar_length_y/1000:.1f}", f"{(actual_bars_y * bar_length_x + actual_bars_x * bar_length_y)/1000:.1f}"],
+                "Weight (kg)": [f"{weight_x:.1f}", f"{weight_y:.1f}", f"{total_weight:.1f}"],
+                "As Provided (mm²/m)": [f"{1000 * bar_area_x / spacing_x:.0f}", f"{1000 * bar_area_y / spacing_y:.0f}", "-"],
+                "As Required (mm²/m)": [f"{As_x:.0f}", f"{As_y:.0f}", "-"]
+            }
+            
+            st.dataframe(pd.DataFrame(rebar_summary), use_container_width=True)
+            
+            # Add reinforcement notes
+            st.markdown("""
+            **หมายเหตุการออกแบบเหล็กเสริม:**
+            - เหล็กเสริมทิศทาง X: วางขนานกับแกน X (ความยาวฐานราก)
+            - เหล็กเสริมทิศทาง Y: วางขนานกับแกน Y (ความกว้างฐานราก)  
+            - ระยะห่างวัดจากใจกลางเหล็กถึงใจกลางเหล็ก (center to center)
+            - เหล็กทั้งหมดวางที่ด้านล่างของฐานราก (bottom reinforcement)
+            - การพับปลายเหล็กเสริมให้ปฏิบัติตาม ACI 318M-25 Section 8.3
+            """)
+            
             col1, col2 = st.columns(2)
             
             with col1:
@@ -1356,6 +1693,13 @@ if run_analysis:
                 
                 # Create punching shear visualization
                 fig_punch = go.Figure()
+                
+                # Calculate critical section coordinates for punching shear
+                d = foundation_thickness - steel_cover - bar_dia_x/2
+                crit_x1 = col_x1 - d/2
+                crit_x2 = col_x2 + d/2
+                crit_y1 = col_y1 - d/2
+                crit_y2 = col_y2 + d/2
                 
                 # Foundation outline
                 fig_punch.add_trace(go.Scatter(
